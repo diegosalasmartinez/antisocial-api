@@ -10,6 +10,7 @@ const helmet = require('helmet')
 const xss = require('xss-clean')
 const rateLimit = require('express-rate-limit')
 
+const authRoutes = require('./src/routes/AuthRoutes')
 const specialtyRoutes = require('./src/routes/SpecialtyRoutes')
 
 const errorHandlerMiddleware = require('./src/middleware/errorHandlerMiddleware')
@@ -28,6 +29,7 @@ app.use(xss());
 app.get('/', (req, res) => { res.send("<h1>Welcome to Antisocial API</h1><p>Developed by Diego Salas</p>") })
 
 const baseUrl = "/api/v1"
+app.use(baseUrl + '/auth', authRoutes);
 app.use(baseUrl + '/specialties', specialtyRoutes);
 
 app.use(notFoundMiddleware)
