@@ -21,14 +21,16 @@ const login = async (req, res) => {
 
     const token = user.createJWT();
     const userResponse = {
+      _id: user._id,
       name: user.name,
-      lastName: user.lastName
+      lastName: user.lastName,
+      username: user.username
     }
     res.status(StatusCodes.OK).json({user: userResponse, token});
-}
-
-const register = async (req, res) => {
-  const newUser = new User({
+  }
+  
+  const register = async (req, res) => {
+    const newUser = new User({
     name: req.body.name,
     lastName: req.body.lastName,
     username: req.body.username,
@@ -39,8 +41,10 @@ const register = async (req, res) => {
   const user = await newUser.save();
   const token = user.createJWT();
   const userResponse = {
+    _id: user._id,
     name: user.name,
-    lastName: user.lastName
+    lastName: user.lastName,
+    username: user.username
   }
   res.status(StatusCodes.OK).json({user: userResponse, token});
 }
