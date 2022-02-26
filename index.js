@@ -11,8 +11,9 @@ const xss = require('xss-clean')
 const rateLimit = require('express-rate-limit')
 
 const authRoutes = require('./src/routes/AuthRoutes')
-const specialtyRoutes = require('./src/routes/SpecialtyRoutes')
+const postRoutes = require('./src/routes/PostRoutes')
 
+const authenticationMiddleware = require('./src/middleware/authenticationMiddleware')
 const errorHandlerMiddleware = require('./src/middleware/errorHandlerMiddleware')
 const notFoundMiddleware = require('./src/middleware/notFoundMiddleware')
 
@@ -30,7 +31,9 @@ app.get('/', (req, res) => { res.send("<h1>Welcome to Antisocial API</h1><p>Deve
 
 const baseUrl = "/api/v1"
 app.use(baseUrl + '/auth', authRoutes);
-app.use(baseUrl + '/specialties', specialtyRoutes);
+
+app.use(authenticationMiddleware);
+app.use(baseUrl + '/posts', postRoutes);
 
 app.use(notFoundMiddleware)
 app.use(errorHandlerMiddleware)
