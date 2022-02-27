@@ -11,6 +11,7 @@ const xss = require('xss-clean')
 const rateLimit = require('express-rate-limit')
 
 const authRoutes = require('./src/routes/AuthRoutes')
+const userRoutes = require('./src/routes/UserRoutes')
 const postRoutes = require('./src/routes/PostRoutes')
 
 const authenticationMiddleware = require('./src/middleware/authenticationMiddleware')
@@ -33,6 +34,7 @@ const baseUrl = "/api/v1"
 app.use(baseUrl + '/auth', authRoutes);
 
 app.use(authenticationMiddleware);
+app.use(baseUrl + '/users', userRoutes);
 app.use(baseUrl + '/posts', postRoutes);
 
 app.use(notFoundMiddleware)

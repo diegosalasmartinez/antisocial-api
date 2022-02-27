@@ -1,4 +1,5 @@
 const Post = require('../models/PostModel')
+const User = require('../models/UserModel')
 
 const getPosts = async (req, res) => {
     const posts = await Post.find().populate({ 
@@ -6,19 +7,6 @@ const getPosts = async (req, res) => {
         select: '-password'
     }).sort({date: -1});
     res.status(200).json(posts);
-}
-
-const getProfile = async (req, res) => {
-    const { username } = req.params;
-    const posts = await Post.find({username: username}).populate({ 
-        path: 'author',
-        select: '-password'
-    }).sort({date: -1});
-
-    const postsLiked = [];
-    const postsUnLiked = [];
-
-    res.status(200).json({posts, postsLiked, postsUnLiked});
 }
 
 const createPost = async (req, res) => {
@@ -33,6 +21,8 @@ const createPost = async (req, res) => {
     })
 
     const postCreated = await newPost.save();
+    await User.findByIdAndUpdate(user._id, { $push: { "posts": postCreated._id } }, {safe: true, upsert: true, new : true});
+
     res.status(201).json(postCreated);
 }
 
@@ -44,8 +34,10 @@ const likePost = async (req, res) => {
 
     if (post.likes.includes(user._id)) {
         postUpdated = await Post.findByIdAndUpdate(post._id, { $pull: { "likes": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $pull: { "likes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     } else {
         postUpdated = await Post.findByIdAndUpdate(post._id, { $push: { "likes": user._id }, $pull: { "unlikes": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $push: { "likes": postUpdated._id }, $pull: { "unlikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
     await postUpdated.populate({ path: 'author', select: '-password'})
@@ -60,8 +52,28 @@ const unlikePost = async (req, res) => {
 
     if (post.unlikes.includes(user._id)) {
         postUpdated = await Post.findByIdAndUpdate(post._id, { $pull: { "unlikes": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $pull: { "unlikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     } else {
         postUpdated = await Post.findByIdAndUpdate(post._id, { $push: { "unlikes": user._id }, $pull: { "likes": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $push: { "unlikes": postUpdated._id }, $pull: { "likes": postUpdated._id } }, {safe: true, upsert: true, new : true});
+    }
+
+    await postUpdated.populate({ path: 'author', select: '-password'})
+    res.status(201).json(postUpdated);
+}
+
+const savePost = async (req, res) => {
+    const post = req.body;
+    const user = req.user;
+
+    let postUpdated;
+
+    if (post.likes.includes(user._id)) {
+        postUpdated = await Post.findByIdAndUpdate(post._id, { $pull: { "saves": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $pull: { "saves": postUpdated._id } }, {safe: true, upsert: true, new : true});
+    } else {
+        postUpdated = await Post.findByIdAndUpdate(post._id, { $push: { "saves": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $push: { "saves": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
     await postUpdated.populate({ path: 'author', select: '-password'})
@@ -88,8 +100,8 @@ const deleteSpecialty = async (req, res) => {
 
 module.exports = {
     getPosts,
-    getProfile,
     createPost,
     likePost,
-    unlikePost
+    unlikePost,
+    savePost
 }
