@@ -4,7 +4,7 @@ const User = require('../models/UserModel')
 const getPosts = async (req, res) => {
     const posts = await Post.find().populate({ 
         path: 'author',
-        select: '-password'
+        select: '-password -posts -likes -unlikes -saves'
     }).sort({date: -1});
     res.status(200).json(posts);
 }
@@ -21,8 +21,8 @@ const createPost = async (req, res) => {
     })
 
     const postCreated = await newPost.save();
-    await User.findByIdAndUpdate(user._id, { $push: { "posts": postCreated._id } }, {safe: true, upsert: true, new : true});
-
+    await User.findByIdAndUpdate(user._id, { $push: { "posts": postCreated._id }, $inc: { "postsNumber": 1 } }, {safe: true, upsert: true, new : true});
+    
     res.status(201).json(postCreated);
 }
 

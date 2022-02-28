@@ -7,7 +7,7 @@ const getProfile = async (req, res) => {
         path: 'posts',
         populate: {
             path: 'author',
-            select: '-password'
+            select: '-password -posts -likes -unlikes -saves'
         },
         options: { sort: {date: -1} }
     }
@@ -15,7 +15,7 @@ const getProfile = async (req, res) => {
         path: 'likes',
         populate: {
             path: 'author',
-            select: '-password'
+            select: '-password -posts -likes -unlikes -saves'
         },
         options: { sort: {date: -1} }
     }
@@ -23,7 +23,7 @@ const getProfile = async (req, res) => {
         path: 'unlikes',
         populate: {
             path: 'author',
-            select: '-password'
+            select: '-password -posts -likes -unlikes -saves'
         },
         options: { sort: {date: -1} }
     }
