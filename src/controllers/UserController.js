@@ -5,26 +5,44 @@ const getProfile = async (req, res) => {
 
     const populatePosts = { 
         path: 'posts',
-        populate: {
-            path: 'author',
-            select: '-password -posts -likes -unlikes -saves'
-        },
+        populate: [
+            {
+                path: 'author',
+                select: '-password -posts -likes -unlikes -saves'
+            },
+            {
+                path: 'category',
+                select: '-posts'
+            },
+        ],
         options: { sort: {date: -1} }
     }
     const populateLikes = { 
         path: 'likes',
-        populate: {
-            path: 'author',
-            select: '-password -posts -likes -unlikes -saves'
-        },
+        populate: [
+            {
+                path: 'author',
+                select: '-password -posts -likes -unlikes -saves'
+            },
+            {
+                path: 'category',
+                select: '-posts'
+            },
+        ],
         options: { sort: {date: -1} }
     }
     const populateUnlikes = { 
         path: 'unlikes',
-        populate: {
-            path: 'author',
-            select: '-password -posts -likes -unlikes -saves'
-        },
+        populate: [
+            {
+                path: 'author',
+                select: '-password -posts -likes -unlikes -saves'
+            },
+            {
+                path: 'category',
+                select: '-posts'
+            },
+        ],
         options: { sort: {date: -1} }
     }
 

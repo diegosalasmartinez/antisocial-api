@@ -1,11 +1,12 @@
 const Post = require('../models/PostModel')
+const Category = require('../models/CategoryModel')
 const User = require('../models/UserModel')
 
 const getPosts = async (req, res) => {
     const posts = await Post.find().populate({ 
         path: 'author',
         select: '-password -posts -likes -unlikes -saves'
-    }).sort({date: -1});
+    }).populate({ path: 'category', select: '-posts' }).sort({date: -1});
     res.status(200).json(posts);
 }
 
@@ -18,11 +19,13 @@ const createPost = async (req, res) => {
         body: post.body,
         date: post.date,
         author: user._id,
+        category: post.category._id
     })
 
     const postCreated = await newPost.save();
     await User.findByIdAndUpdate(user._id, { $push: { "posts": postCreated._id }, $inc: { "postsNumber": 1 } }, {safe: true, upsert: true, new : true});
-    
+    await Category.findByIdAndUpdate(post.category._id, { $push: { "posts": postCreated._id } }, {safe: true, upsert: true, new : true});
+
     res.status(201).json(postCreated);
 }
 
@@ -40,7 +43,7 @@ const likePost = async (req, res) => {
         await User.findByIdAndUpdate(user._id, { $push: { "likes": postUpdated._id }, $pull: { "unlikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
-    await postUpdated.populate({ path: 'author', select: '-password'})
+    await postUpdated.populate([{ path: 'author', select: '-password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
 }
 
@@ -58,7 +61,7 @@ const unlikePost = async (req, res) => {
         await User.findByIdAndUpdate(user._id, { $push: { "unlikes": postUpdated._id }, $pull: { "likes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
-    await postUpdated.populate({ path: 'author', select: '-password'})
+    await postUpdated.populate([{ path: 'author', select: '-password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
 }
 
@@ -76,7 +79,7 @@ const savePost = async (req, res) => {
         await User.findByIdAndUpdate(user._id, { $push: { "saves": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
-    await postUpdated.populate({ path: 'author', select: '-password'})
+    await postUpdated.populate([{ path: 'author', select: '-password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
 }
 
