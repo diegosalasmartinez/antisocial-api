@@ -13,6 +13,7 @@ const rateLimit = require('express-rate-limit')
 const authRoutes = require('./src/routes/AuthRoutes')
 const userRoutes = require('./src/routes/UserRoutes')
 const postRoutes = require('./src/routes/PostRoutes')
+const categoryRoutes = require('./src/routes/CategoryRoutes')
 
 const authenticationMiddleware = require('./src/middleware/authenticationMiddleware')
 const errorHandlerMiddleware = require('./src/middleware/errorHandlerMiddleware')
@@ -36,6 +37,7 @@ app.use(baseUrl + '/auth', authRoutes);
 app.use(authenticationMiddleware);
 app.use(baseUrl + '/users', userRoutes);
 app.use(baseUrl + '/posts', postRoutes);
+app.use(baseUrl + '/categories', categoryRoutes);
 
 app.use(notFoundMiddleware)
 app.use(errorHandlerMiddleware)
