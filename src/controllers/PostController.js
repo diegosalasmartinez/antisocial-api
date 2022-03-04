@@ -3,7 +3,13 @@ const Category = require('../models/CategoryModel')
 const User = require('../models/UserModel')
 
 const getPosts = async (req, res) => {
-    const posts = await Post.find().populate({ 
+    const { category } = req.query;
+    const matchOptions = {};
+    if (category) {
+        matchOptions.category = category;
+    }
+    
+    const posts = await Post.find(matchOptions).populate({ 
         path: 'author',
         select: '-password -posts -likes -unlikes -saves'
     }).populate({ path: 'category', select: '-posts' }).sort({date: -1});
