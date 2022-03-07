@@ -34,6 +34,12 @@ const postSchema = mongoose.Schema({
       ref: 'User'
     }
   ],
+  saves: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
 })
 
 module.exports = mongoose.model('Post', postSchema)

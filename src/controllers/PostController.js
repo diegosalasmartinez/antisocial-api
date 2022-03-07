@@ -5,7 +5,7 @@ const User = require('../models/UserModel')
 const getPosts = async (req, res) => {
     const { category } = req.query;
     const matchOptions = {};
-    if (category) {
+    if (category !== 'undefined') {
         matchOptions.category = category;
     }
     
@@ -77,7 +77,7 @@ const savePost = async (req, res) => {
 
     let postUpdated;
 
-    if (post.likes.includes(user._id)) {
+    if (post.saves.includes(user._id)) {
         postUpdated = await Post.findByIdAndUpdate(post._id, { $pull: { "saves": user._id } }, {safe: true, upsert: true, new : true});
         await User.findByIdAndUpdate(user._id, { $pull: { "saves": postUpdated._id } }, {safe: true, upsert: true, new : true});
     } else {
