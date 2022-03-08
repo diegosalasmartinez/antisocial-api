@@ -16,6 +16,29 @@ const getPosts = async (req, res) => {
     res.status(200).json(posts);
 }
 
+const getSavedPosts = async (req, res) => {    
+    const user = req.user;
+    const populateSavedPosts = { 
+        path: 'saves',
+        populate: [
+            {
+                path: 'author',
+                select: '-password -posts -likes -unlikes -saves'
+            },
+            {
+                path: 'category',
+                select: '-posts'
+            },
+        ],
+        options: { sort: {date: -1} }
+    }
+
+    const users = await User.find({_id: user._id}).populate(populateSavedPosts).sort({date: -1}).select('-password');
+    const posts = users[0].saves;
+
+    res.status(200).json(posts);
+}
+
 const createPost = async (req, res) => {
     const post = req.body;
     const user = req.user;
@@ -109,6 +132,7 @@ const deleteSpecialty = async (req, res) => {
 
 module.exports = {
     getPosts,
+    getSavedPosts,
     createPost,
     likePost,
     unlikePost,
