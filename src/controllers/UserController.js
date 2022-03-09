@@ -51,6 +51,11 @@ const getProfile = async (req, res) => {
     res.status(200).json(user);
 }
 
+const followUser = async (req, res) => {
+
+}
+
 module.exports = {
-    getProfile
+    getProfile,
+    followUser
 }
