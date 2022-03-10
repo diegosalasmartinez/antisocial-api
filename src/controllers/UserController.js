@@ -52,7 +52,13 @@ const getProfile = async (req, res) => {
 }
 
 const followUser = async (req, res) => {
+    const { userIdToFollow } = req.params;
+    const user = req.user;
 
+    const userUpdated = await User.findByIdAndUpdate(user._id, { $push: { "following": userIdToFollow } }, {safe: true, upsert: true, new : true}).select('following');
+    await User.findByIdAndUpdate(userIdToFollow, { $push: { "followers": user._id } }, {safe: true, upsert: true, new : true})
+    
+    res.status(201).json(userUpdated);
 }
 
 module.exports = {
