@@ -6,7 +6,7 @@ const getPostsByFollowingUsers = async (req, res) => {
     const user = req.user;
 
     const users = await User.findById(user._id).select('following');    
-    const usersId = users.following;
+    const usersId = [...users.following, user._id];
     
     const posts = await Post.find({ author: { $in: usersId } }).populate({ 
         path: 'author',
