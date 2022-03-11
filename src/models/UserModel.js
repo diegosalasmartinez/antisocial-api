@@ -44,7 +44,7 @@ const userSchema = mongoose.Schema({
       ref: 'Post'
     }
   ],
-  unlikes: [
+  dislikes: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Post'

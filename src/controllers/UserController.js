@@ -8,7 +8,7 @@ const getProfile = async (req, res) => {
         populate: [
             {
                 path: 'author',
-                select: '-password -posts -likes -unlikes -saves'
+                select: '-password -posts -likes -dislikes -saves'
             },
             {
                 path: 'category',
@@ -22,7 +22,7 @@ const getProfile = async (req, res) => {
         populate: [
             {
                 path: 'author',
-                select: '-password -posts -likes -unlikes -saves'
+                select: '-password -posts -likes -dislikes -saves'
             },
             {
                 path: 'category',
@@ -31,12 +31,12 @@ const getProfile = async (req, res) => {
         ],
         options: { sort: {date: -1} }
     }
-    const populateUnlikes = { 
-        path: 'unlikes',
+    const populateDislikes = { 
+        path: 'dislikes',
         populate: [
             {
                 path: 'author',
-                select: '-password -posts -likes -unlikes -saves'
+                select: '-password -posts -likes -dislikes -saves'
             },
             {
                 path: 'category',
@@ -46,7 +46,7 @@ const getProfile = async (req, res) => {
         options: { sort: {date: -1} }
     }
 
-    const user = await User.find({username: username}).populate(populatePosts).populate(populateLikes).populate(populateUnlikes).sort({date: -1}).select('-password');
+    const user = await User.find({username: username}).populate(populatePosts).populate(populateLikes).populate(populateDislikes).sort({date: -1}).select('-password');
 
     res.status(200).json(user);
 }
