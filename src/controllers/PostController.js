@@ -11,7 +11,7 @@ const getPosts = async (req, res) => {
     
     const posts = await Post.find(matchOptions).populate({ 
         path: 'author',
-        select: '-password -posts -likes -unlikes -saves'
+        select: '-password -posts -likes -unlikes -saves -followers -following'
     }).populate({ path: 'category', select: '-posts' }).sort({date: -1});
     res.status(200).json(posts);
 }
@@ -23,7 +23,7 @@ const getSavedPosts = async (req, res) => {
         populate: [
             {
                 path: 'author',
-                select: '-password -posts -likes -unlikes -saves'
+                select: '-password -posts -likes -unlikes -saves -followers -following'
             },
             {
                 path: 'category',
@@ -72,7 +72,7 @@ const likePost = async (req, res) => {
         await User.findByIdAndUpdate(user._id, { $push: { "likes": postUpdated._id }, $pull: { "unlikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
-    await postUpdated.populate([{ path: 'author', select: '-password'},{ path: 'category', select: '-posts' } ]);
+    await postUpdated.populate([{ path: 'author', select: '-posts -followers -following -password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
 }
 
@@ -90,7 +90,7 @@ const unlikePost = async (req, res) => {
         await User.findByIdAndUpdate(user._id, { $push: { "unlikes": postUpdated._id }, $pull: { "likes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
-    await postUpdated.populate([{ path: 'author', select: '-password'},{ path: 'category', select: '-posts' } ]);
+    await postUpdated.populate([{ path: 'author', select: '-posts -followers -following -password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
 }
 
@@ -108,7 +108,7 @@ const savePost = async (req, res) => {
         await User.findByIdAndUpdate(user._id, { $push: { "saves": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
-    await postUpdated.populate([{ path: 'author', select: '-password'},{ path: 'category', select: '-posts' } ]);
+    await postUpdated.populate([{ path: 'author', select: '-posts -followers -following -password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
 }
 
