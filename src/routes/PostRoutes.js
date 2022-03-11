@@ -1,9 +1,10 @@
 const express = require('express')
-const { getPosts, getSavedPosts, createPost, likePost, unlikePost, savePost } = require('../controllers/PostController')
+const { getPostsByFollowingUsers, getPostsByCategory, getSavedPosts, createPost, likePost, unlikePost, savePost } = require('../controllers/PostController')
 
 const router = express.Router();
 
-router.get('/', getPosts);
+router.get('/following', getPostsByFollowingUsers);
+router.get('/category/:categoryId', getPostsByCategory);
 router.get('/saved', getSavedPosts);
 router.post('/add', createPost);
 router.post('/like', likePost);

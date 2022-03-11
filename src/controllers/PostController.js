@@ -2,17 +2,26 @@ const Post = require('../models/PostModel')
 const Category = require('../models/CategoryModel')
 const User = require('../models/UserModel')
 
-const getPosts = async (req, res) => {
-    const { category } = req.query;
-    const matchOptions = {};
-    if (category !== 'undefined') {
-        matchOptions.category = category;
-    }
+const getPostsByFollowingUsers = async (req, res) => {
+    const user = req.user;
+
+    const users = await User.findById(user._id).select('following');    
+    const usersId = users.following;
     
-    const posts = await Post.find(matchOptions).populate({ 
+    const posts = await Post.find({ author: { $in: usersId } }).populate({ 
         path: 'author',
         select: '-password -posts -likes -unlikes -saves -followers -following'
     }).populate({ path: 'category', select: '-posts' }).sort({date: -1});
+    res.status(200).json(posts);
+}
+
+const getPostsByCategory = async (req, res) => {
+    const { categoryId } = req.params;
+    
+    const posts = await Post.find({ category: categoryId}).populate({ 
+        path: 'author',
+        select: '-password -posts -likes -unlikes -saves -followers -following'
+    }).populate({ path: 'category', select: '-posts' }).sort({ date: -1 });
     res.status(200).json(posts);
 }
 
@@ -131,7 +140,8 @@ const deleteSpecialty = async (req, res) => {
 }
 
 module.exports = {
-    getPosts,
+    getPostsByFollowingUsers,
+    getPostsByCategory,
     getSavedPosts,
     createPost,
     likePost,
