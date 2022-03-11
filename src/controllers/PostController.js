@@ -10,7 +10,7 @@ const getPostsByFollowingUsers = async (req, res) => {
     
     const posts = await Post.find({ author: { $in: usersId } }).populate({ 
         path: 'author',
-        select: '-password -posts -likes -unlikes -saves -followers -following'
+        select: '-password -posts -likes -dislikes -saves -followers -following'
     }).populate({ path: 'category', select: '-posts' }).sort({date: -1});
     res.status(200).json(posts);
 }
@@ -20,8 +20,77 @@ const getPostsByCategory = async (req, res) => {
     
     const posts = await Post.find({ category: categoryId}).populate({ 
         path: 'author',
-        select: '-password -posts -likes -unlikes -saves -followers -following'
+        select: '-password -posts -likes -dislikes -saves -followers -following'
     }).populate({ path: 'category', select: '-posts' }).sort({ date: -1 });
+    res.status(200).json(posts);
+}
+
+const getMostLikedPosts = async (req, res) => {
+    const posts = await Post.aggregate([
+        {
+            $match: {
+                $expr: {
+                    $eq: [ { $year: "$date" }, { $year: new Date() }],
+                    $eq: [ { $month: "$date" }, { $month: new Date() }],
+                    $eq: [ { $dayOfMonth: "$date" }, { $dayOfMonth: new Date() }],
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: '_id',
+                as: 'author'
+            }
+        },
+        {
+            $unwind: "$author"
+        },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'category',
+                foreignField: '_id',
+                as: 'category'
+            }
+        },
+        {
+            $unwind: "$category"
+        },
+        {
+            $addFields: {
+                'numLikes': { $cond: { if: { $isArray: "$likes" }, then: { $size: "$likes" }, else: 0} },
+                'numDislikes': { $cond: { if: { $isArray: "$dislikes" }, then: { $size: "$dislikes" }, else: 0} },
+            }
+        },
+        {
+            $addFields: {
+                'reputation': { $cond: { if: { $lte: ['$numDislikes', { '$multiply': [0.5, '$numLikes'] } ]}, 
+                    then: { $subtract: ['$numLikes', '$numDislikes']}, 
+                    else: { $subtract: ['$numLikes', { '$multiply': [1.5, '$numDislikes'] } ]}
+                }}
+            }
+        },
+        {
+            $project: {
+                'author.password': 0,
+                'author.posts': 0,
+                'author.likes': 0,
+                'author.dislikes': 0,
+                'author.saves': 0,
+                'author.followers': 0,
+                'author.following': 0,
+                'category.posts': 0,
+            }
+        },
+        {
+            $sort: { 'reputation': -1 }
+        },
+        {
+            $limit: 5
+        }
+    ])
     res.status(200).json(posts);
 }
 
@@ -32,7 +101,7 @@ const getSavedPosts = async (req, res) => {
         populate: [
             {
                 path: 'author',
-                select: '-password -posts -likes -unlikes -saves -followers -following'
+                select: '-password -posts -likes -dislikes -saves -followers -following'
             },
             {
                 path: 'category',
@@ -77,26 +146,26 @@ const likePost = async (req, res) => {
         postUpdated = await Post.findByIdAndUpdate(post._id, { $pull: { "likes": user._id } }, {safe: true, upsert: true, new : true});
         await User.findByIdAndUpdate(user._id, { $pull: { "likes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     } else {
-        postUpdated = await Post.findByIdAndUpdate(post._id, { $push: { "likes": user._id }, $pull: { "unlikes": user._id } }, {safe: true, upsert: true, new : true});
-        await User.findByIdAndUpdate(user._id, { $push: { "likes": postUpdated._id }, $pull: { "unlikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
+        postUpdated = await Post.findByIdAndUpdate(post._id, { $push: { "likes": user._id }, $pull: { "dislikes": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $push: { "likes": postUpdated._id }, $pull: { "dislikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
     await postUpdated.populate([{ path: 'author', select: '-posts -followers -following -password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
 }
 
-const unlikePost = async (req, res) => {
+const dislikePost = async (req, res) => {
     const post = req.body;
     const user = req.user;
 
     let postUpdated;
 
-    if (post.unlikes.includes(user._id)) {
-        postUpdated = await Post.findByIdAndUpdate(post._id, { $pull: { "unlikes": user._id } }, {safe: true, upsert: true, new : true});
-        await User.findByIdAndUpdate(user._id, { $pull: { "unlikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
+    if (post.dislikes.includes(user._id)) {
+        postUpdated = await Post.findByIdAndUpdate(post._id, { $pull: { "dislikes": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $pull: { "dislikes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     } else {
-        postUpdated = await Post.findByIdAndUpdate(post._id, { $push: { "unlikes": user._id }, $pull: { "likes": user._id } }, {safe: true, upsert: true, new : true});
-        await User.findByIdAndUpdate(user._id, { $push: { "unlikes": postUpdated._id }, $pull: { "likes": postUpdated._id } }, {safe: true, upsert: true, new : true});
+        postUpdated = await Post.findByIdAndUpdate(post._id, { $push: { "dislikes": user._id }, $pull: { "likes": user._id } }, {safe: true, upsert: true, new : true});
+        await User.findByIdAndUpdate(user._id, { $push: { "dislikes": postUpdated._id }, $pull: { "likes": postUpdated._id } }, {safe: true, upsert: true, new : true});
     }
 
     await postUpdated.populate([{ path: 'author', select: '-posts -followers -following -password'},{ path: 'category', select: '-posts' } ]);
@@ -143,8 +212,9 @@ module.exports = {
     getPostsByFollowingUsers,
     getPostsByCategory,
     getSavedPosts,
+    getMostLikedPosts,
     createPost,
     likePost,
-    unlikePost,
+    dislikePost,
     savePost
 }
