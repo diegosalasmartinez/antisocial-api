@@ -1,4 +1,5 @@
 const User = require('../models/UserModel')
+const Post = require('../models/PostModel')
 
 const getProfile = async (req, res) => {
     const { username } = req.params;
@@ -78,8 +79,82 @@ const unfollowUser = async (req, res) => {
     res.status(201).json(userUpdated);
 }
 
+const recommendedUsers = async (req, res) => {
+    const dateFrom = new Date();
+    dateFrom.setHours(0,0,0,0)
+    dateFrom.setDate(dateFrom.getDate() - 7);
+    const dateTo = new Date();
+    dateTo.setHours(23,59,59,999)
+
+    const projectionOptions = { 'author.password': 0, 'author.posts': 0, 'author.likes': 0, 'author.dislikes': 0, 'author.saves': 0, 'author.followers': 0, 'author.following': 0, 'category.posts': 0 }
+
+    const posts = await Post.aggregate([
+        {
+            $match: { 'date': { $gte: dateFrom, $lte: dateTo } }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: '_id',
+                as: 'author'
+            }
+        },
+        {
+            $unwind: '$author'
+        },
+        {
+            $addFields: {
+                'numLikes': { $cond: { if: { $isArray: '$likes' }, then: { $size: '$likes' }, else: 0} },
+                'numDislikes': { $cond: { if: { $isArray: '$dislikes' }, then: { $size: '$dislikes' }, else: 0} },
+            }
+        },
+        {
+            $addFields: {
+                'reputation': { $cond: { if: { $lte: ['$numDislikes', { '$multiply': [0.5, '$numLikes'] } ]}, 
+                    then: { $subtract: ['$numLikes', '$numDislikes']}, 
+                    else: { $subtract: ['$numLikes', { '$multiply': [1.5, '$numDislikes'] } ]}
+                }}
+            }
+        },
+        {
+            $project: projectionOptions
+        },
+        {
+            $group: {
+                '_id': '$author._id',
+                'author': { $first: '$author'},
+                'posts': { $push: {
+                    '_id': '$_id', 
+                    'title': '$title',
+                    'reputation': '$reputation'
+                }},
+            }
+        },
+        {
+            $addFields: {
+                'totalReputation': { $sum: '$posts.reputation' }
+            }
+        },
+        {
+            $match: { 'totalReputation': { $gte: 0} } 
+        },
+        {
+            $project: { 'author': 1 }
+        },
+        {
+            $sort: { 'totalReputation': -1 }
+        },
+        {
+            $limit: 10
+        }
+    ])
+    res.status(200).json(posts);
+}
+
 module.exports = {
     getProfile,
+    recommendedUsers,
     following,
     followUser,
     unfollowUser
