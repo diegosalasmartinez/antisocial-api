@@ -152,8 +152,20 @@ const recommendedUsers = async (req, res) => {
     res.status(200).json(posts);
 }
 
+const updateUserInfo = async (req, res) => {
+    const { id } = req.params;
+    const user = req.body;
+    const { name, lastName, description } = user;
+    const updatedUser = { name, lastName, description };
+
+    await User.findOneAndUpdate({_id: id}, updatedUser, { new: true });
+    res.status(201).json({message: "User updated successfully"});
+}
+
+
 module.exports = {
     getProfile,
+    updateUserInfo,
     recommendedUsers,
     following,
     followUser,
