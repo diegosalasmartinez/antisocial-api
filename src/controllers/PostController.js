@@ -25,10 +25,19 @@ const getPostsByCategory = async (req, res) => {
 }
 
 const getMostLikedPosts = async (req, res) => {
+    const { timeOption } = req.query;
+
     const dateFrom = new Date();
-    dateFrom.setHours(0,0,0,0)
     const dateTo = new Date();
-    dateTo.setHours(23,59,59,999)
+    dateTo.setHours(23,59,59,999);
+    
+    if (timeOption === 0) {
+        dateFrom.setHours(0,0,0,0)
+    } else if (timeOption === 1) {
+        dateFrom.setDate(dateFrom.getDate() - 7);
+    } else {
+        dateFrom.setDate(dateFrom.getDate() - 30);
+    }
 
     const projectionOptions = { 'author.password': 0, 'author.posts': 0, 'author.likes': 0, 'author.dislikes': 0, 'author.saves': 0, 'author.followers': 0, 'author.following': 0, 'category.posts': 0 }
 
@@ -179,24 +188,6 @@ const savePost = async (req, res) => {
 
     await postUpdated.populate([{ path: 'author', select: '-posts -followers -following -password'},{ path: 'category', select: '-posts' } ]);
     res.status(201).json(postUpdated);
-}
-
-const updateSpecialty = async (req, res) => {
-    // const { id } = req.params;
-    // const specialty = req.body;
-    // const { code, name } = specialty;
-    // const updatedSpecialty = { code, name };
-
-    // await Specialty.findOneAndUpdate({_id: id}, updatedSpecialty, { new: true });
-    // res.status(201).json({message: 'Specialty updated successfully'});
-}
-
-const deleteSpecialty = async (req, res) => {
-    // const { id } = req.params;
-    // const updatedSpecialty = { active: false }; 
-
-    // await Specialty.findOneAndUpdate({_id: id}, updatedSpecialty, { new: true });
-    // res.status(200).json({message: 'Specialty deleted successfully'});
 }
 
 module.exports = {
