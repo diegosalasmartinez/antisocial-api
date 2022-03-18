@@ -26,16 +26,14 @@ const getPostsByCategory = async (req, res) => {
 
 const getMostLikedPosts = async (req, res) => {
     const { timeOption } = req.query;
-
     const dateFrom = new Date();
     const dateTo = new Date();
+    dateFrom.setHours(0,0,0,0)
     dateTo.setHours(23,59,59,999);
     
-    if (timeOption === 0) {
-        dateFrom.setHours(0,0,0,0)
-    } else if (timeOption === 1) {
+    if (timeOption === '1') {
         dateFrom.setDate(dateFrom.getDate() - 7);
-    } else {
+    } else if (timeOption === '2') {
         dateFrom.setDate(dateFrom.getDate() - 30);
     }
 
