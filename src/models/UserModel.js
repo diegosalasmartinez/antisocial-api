@@ -38,10 +38,6 @@ const userSchema = mongoose.Schema({
       ref: 'Post'
     }
   ],
-  postsNumber: {
-    type: Number,
-    default: 0
-  },
   likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -66,20 +62,12 @@ const userSchema = mongoose.Schema({
       ref: 'User'
     }
   ],
-  followersNumber: {
-    type: Number,
-    default: 0
-  },
   following: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     }
   ],
-  followingNumber: {
-    type: Number,
-    default: 0
-  },
   active: {
     type: Boolean,
     default: true
