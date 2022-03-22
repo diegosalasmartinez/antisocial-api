@@ -40,6 +40,18 @@ const postSchema = mongoose.Schema({
       ref: 'User'
     }
   ],
+  replies: [
+    {
+      author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      message: {
+        type: String,
+        required: true
+      }
+    }
+  ],
 })
 
 module.exports = mongoose.model('Post', postSchema)
