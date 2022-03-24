@@ -329,6 +329,20 @@ const savePost = async (req, res) => {
     res.status(201).json(postUpdated);
 }
 
+const replyPost = async (req, res) => {
+    const { postId } = req.params;
+    const user = req.user;
+    const reply = req.body;
+
+    const newReply = {
+        author: user._id,
+        message: reply.message
+    }
+
+    await Post.findByIdAndUpdate(postId, { $push: { 'replies': newReply } }, {safe: true, upsert: true, new : true});
+    res.status(200).json({message: 'Reply added!'});
+}
+
 module.exports = {
     getPostsByFollowingUsers,
     getPostsByCategory,
@@ -337,5 +351,6 @@ module.exports = {
     createPost,
     likePost,
     dislikePost,
-    savePost
+    savePost,
+    replyPost
 }
