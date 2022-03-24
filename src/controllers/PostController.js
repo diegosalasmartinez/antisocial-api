@@ -51,7 +51,7 @@ const getPostsByFollowingUsers = async (req, res) => {
         { $unwind: '$category' },
         { $addFields: {
             'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
-            'author.postNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
             'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
             'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
         }},
@@ -83,7 +83,7 @@ const getPostsByCategory = async (req, res) => {
         { $unwind: '$category' },
         { $addFields: {
             'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
-            'author.postNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
             'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
             'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
         }},
@@ -124,7 +124,7 @@ const getMostLikedPosts = async (req, res) => {
         }},
         { $unwind: '$category' },
         { $addFields: {
-            'author.postNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
             'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
             'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
             'numLikes': { $cond: { if: { $isArray: '$likes' }, then: { $size: '$likes' }, else: 0} },
@@ -147,7 +147,7 @@ const getMostLikedPosts = async (req, res) => {
 const getSavedPosts = async (req, res) => {    
     const user = req.user;
 
-    const posts = await User.aggregate([
+    const postsResponse = await User.aggregate([
         { $match: { $expr: { $eq: ['$_id', { $toObjectId: user._id } ] } } },
         { $lookup: {
             from: 'posts', 
@@ -171,10 +171,10 @@ const getSavedPosts = async (req, res) => {
         }},
         { $unwind: '$posts.category' },
         { $addFields: {
-            'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
-            'author.postNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
-            'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
-            'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
+            'posts.numReplies': { $cond: { if: { $isArray: '$posts.replies' }, then: { $size: '$posts.replies' }, else: 0} },
+            'posts.author.postsNumber': { $cond: { if: { $isArray: '$posts.author.posts' }, then: { $size: '$posts.author.posts' }, else: 0} },
+            'posts.author.followersNumber': { $cond: { if: { $isArray: '$posts.author.followers' }, then: { $size: '$posts.author.followers' }, else: 0} },
+            'posts.author.followingNumber': { $cond: { if: { $isArray: '$posts.author.following' }, then: { $size: '$posts.author.following' }, else: 0} },
         }},
         { $project: projectOptionsSavedPost },
         { $group: {
@@ -183,8 +183,8 @@ const getSavedPosts = async (req, res) => {
         }},
         { $sort: { 'date': -1 } }
     ])
-
-    res.status(200).json(posts[0].posts);
+    const posts = postsResponse.length > 0 ? postsResponse[0].posts : [];
+    res.status(200).json(posts);
 }
 
 const createPost = async (req, res) => {
@@ -236,7 +236,7 @@ const likePost = async (req, res) => {
         { $unwind: '$category' },
         { $addFields: {
             'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
-            'author.postNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
             'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
             'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
         }},
@@ -277,7 +277,7 @@ const dislikePost = async (req, res) => {
         { $unwind: '$category' },
         { $addFields: {
             'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
-            'author.postNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
             'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
             'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
         }},
@@ -318,7 +318,7 @@ const savePost = async (req, res) => {
         { $unwind: '$category' },
         { $addFields: {
             'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
-            'author.postNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
             'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
             'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
         }},
