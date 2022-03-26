@@ -1,6 +1,7 @@
 const Post = require('../models/PostModel')
 const Category = require('../models/CategoryModel')
 const User = require('../models/UserModel')
+const Reply = require('../models/ReplyModel')
 const mongoose = require('mongoose')
 
 const projectOptionsPost = { 
@@ -334,13 +335,15 @@ const replyPost = async (req, res) => {
     const user = req.user;
     const reply = req.body;
 
-    const newReply = {
+    const newReply = new Reply({
         author: user._id,
-        message: reply.message
-    }
+        message: reply.message,
+        date: reply.date
+    })
 
-    await Post.findByIdAndUpdate(postId, { $push: { 'replies': newReply } }, {safe: true, upsert: true, new : true});
-    res.status(200).json({message: 'Reply added!'});
+    const replyCreated = await newReply.save();
+    await Post.findByIdAndUpdate(postId, { $push: { 'replies': replyCreated._id } }, {safe: true, upsert: true, new : true});
+    res.status(200).json({message: 'Reply posted!'});
 }
 
 module.exports = {
