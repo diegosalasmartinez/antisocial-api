@@ -343,7 +343,34 @@ const replyPost = async (req, res) => {
 
     const replyCreated = await newReply.save();
     await Post.findByIdAndUpdate(postId, { $push: { 'replies': replyCreated._id } }, {safe: true, upsert: true, new : true});
-    res.status(200).json({message: 'Reply posted!'});
+
+    const postUpdated = await Post.aggregate([
+        { $match: { $expr: { $eq: ['$_id', { $toObjectId: postId } ] } } },
+        { $lookup: {
+            from: 'users', 
+            localField: 'author', 
+            foreignField: '_id', 
+            as: 'author' 
+        }},
+        { $unwind: '$author' },
+        { $lookup: { 
+            from: 'categories', 
+            localField: 'category', 
+            foreignField: '_id', 
+            as: 'category' 
+        }},
+        { $unwind: '$category' },
+        { $addFields: {
+            'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
+            'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
+        }},
+        { $project: projectOptionsPost },
+        { $sort: { 'date': -1 } }
+    ])
+
+    res.status(200).json(postUpdated[0]);
 }
 
 module.exports = {
