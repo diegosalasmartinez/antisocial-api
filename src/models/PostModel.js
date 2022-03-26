@@ -42,14 +42,8 @@ const postSchema = mongoose.Schema({
   ],
   replies: [
     {
-      author: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-      },
-      message: {
-        type: String,
-        required: true
-      }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Reply'
     }
   ],
 })
