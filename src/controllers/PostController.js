@@ -16,6 +16,27 @@ const projectOptionsPost = {
     'replies': 0,
 }
 
+const projectOptionsPostDetails = {
+    'author.password': 0, 
+    'author.posts': 0, 
+    'author.likes': 0, 
+    'author.dislikes': 0, 
+    'author.saves': 0, 
+    'author.followers': 0, 
+    'author.following': 0, 
+    'category.posts': 0,
+}
+
+const projectOptionsPostReplies = {
+    'replies.author.password': 0, 
+    'replies.author.posts': 0, 
+    'replies.author.likes': 0, 
+    'replies.author.dislikes': 0, 
+    'replies.author.saves': 0, 
+    'replies.author.followers': 0, 
+    'replies.author.following': 0, 
+}
+
 const projectOptionsSavedPost = { 
     'posts.author.password': 0, 
     'posts.author.posts': 0, 
@@ -207,6 +228,70 @@ const createPost = async (req, res) => {
     res.status(201).json(postCreated);
 }
 
+const getPost = async (req, res) => {
+    const { postId } = req.params;
+
+    const repliesResponse = await Post.aggregate([
+        { $match: { $expr: { $eq: ['$_id', { $toObjectId: postId } ] } } },
+        { $lookup: {
+            from: 'replies', 
+            localField: 'replies', 
+            foreignField: '_id', 
+            as: 'replies' 
+        }},
+        { $unwind: '$replies' },
+        { $lookup: {
+            from: 'users',
+            localField: 'replies.author',
+            foreignField: '_id',
+            as: 'replies.author'
+        }}, 
+        { $unwind: '$replies.author' },
+        { $addFields: {
+            'replies.author.postsNumber': { $cond: { if: { $isArray: '$replies.author.posts' }, then: { $size: '$replies.author.posts' }, else: 0} },
+            'replies.author.followersNumber': { $cond: { if: { $isArray: '$replies.author.followers' }, then: { $size: '$replies.author.followers' }, else: 0} },
+            'replies.author.followingNumber': { $cond: { if: { $isArray: '$posrepliests.author.following' }, then: { $size: '$replies.author.following' }, else: 0} },
+        }},
+        { $project: projectOptionsPostReplies },
+        { $group: {
+            '_id': '$_id',
+            'replies': { $push: '$replies' },
+        }},
+        { $sort: { 'date': -1 } }
+    ])
+    const replies = repliesResponse.length > 0 ? repliesResponse[0].replies : [];
+
+
+    const postUpdated = await Post.aggregate([
+        { $match: { $expr: { $eq: ['$_id', { $toObjectId: postId } ] } } },
+        { $lookup: {
+            from: 'users', 
+            localField: 'author', 
+            foreignField: '_id', 
+            as: 'author' 
+        }},
+        { $unwind: '$author' },
+        { $lookup: { 
+            from: 'categories', 
+            localField: 'category', 
+            foreignField: '_id', 
+            as: 'category' 
+        }},
+        { $unwind: '$category' },
+        { $addFields: {
+            'numReplies': { $cond: { if: { $isArray: '$replies' }, then: { $size: '$replies' }, else: 0} },
+            'author.postsNumber': { $cond: { if: { $isArray: '$author.posts' }, then: { $size: '$author.posts' }, else: 0} },
+            'author.followersNumber': { $cond: { if: { $isArray: '$author.followers' }, then: { $size: '$author.followers' }, else: 0} },
+            'author.followingNumber': { $cond: { if: { $isArray: '$author.following' }, then: { $size: '$author.following' }, else: 0} },
+            'replies': replies
+        }},
+        { $project: projectOptionsPostDetails },
+        { $sort: { 'date': -1 } }
+    ])
+
+    res.status(201).json(postUpdated[0]);
+}
+
 const likePost = async (req, res) => {
     const post = req.body;
     const user = req.user;
@@ -379,6 +464,7 @@ module.exports = {
     getSavedPosts,
     getMostLikedPosts,
     createPost,
+    getPost,
     likePost,
     dislikePost,
     savePost,
