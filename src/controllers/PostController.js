@@ -261,7 +261,6 @@ const getPost = async (req, res) => {
     ])
     const replies = repliesResponse.length > 0 ? repliesResponse[0].replies : [];
 
-
     const postUpdated = await Post.aggregate([
         { $match: { $expr: { $eq: ['$_id', { $toObjectId: postId } ] } } },
         { $lookup: {
