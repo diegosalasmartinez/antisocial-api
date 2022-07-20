@@ -1,4 +1,4 @@
-# Antisocial
+# Antisocial API
 
 This project simulates a social media app. It's inspired on Twitter and has a lot of functionalities. This repo only contains the back-end side for this system. See also [Antisocial](https://github.com/diegosalasmartinez/antisocial) to get access to the front-end project.
 
